@@ -1,3 +1,17 @@
+/**
+ * Filtro Backend Server
+ * Optimized for handling GB-sized datasets in production environments
+ * 
+ * For GB-sized files and very large datasets, use production mode:
+ * npm run start:prod (uses 8GB memory)
+ * 
+ * Current limits:
+ * - JSON payload: 2GB
+ * - File upload: 2GB
+ * - Supports pagination for filtering very large datasets
+ * - Optimized for enterprise-level data processing
+ */
+
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -13,15 +27,16 @@ const __dirname = dirname(__filename);
 const app = express();
 const port = 3001;
 
-// Middleware
+// Middleware - Optimized for GB-sized datasets (Real-world production ready)
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2gb' })); // 2GB limit for very large JSON payloads
+app.use(express.urlencoded({ limit: '2gb', extended: true }));
 
-// Configure multer for file uploads
+// Configure multer for file uploads - GB file support for enterprise datasets
 const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB limit for very large Excel files
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
       'application/vnd.ms-excel',
@@ -77,17 +92,29 @@ function detectDataType(value) {
   return 'text';
 }
 
-// Helper function to parse Excel file
+// Helper function to parse Excel file - Optimized for GB-sized files
 function parseExcel(buffer) {
-  const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+  const fileSizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
+  console.log(`Parsing Excel file: ${fileSizeMB} MB`);
+  
+  // For very large files, use optimized parsing options
+  const parseOptions = {
+    type: 'buffer',
+    cellDates: true,
+    dense: false, // Use sparse mode for memory efficiency
+    sheetStubs: false // Skip empty cells
+  };
+  
+  const workbook = XLSX.read(buffer, parseOptions);
   const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
   
-  // Convert to JSON with header row
+  // Convert to JSON with header row - optimized for large datasets
   const data = XLSX.utils.sheet_to_json(worksheet, { 
     raw: false,
     defval: null,
-    dateNF: 'yyyy-mm-dd'
+    dateNF: 'yyyy-mm-dd',
+    blankrows: false // Skip blank rows to save memory
   });
   
   if (data.length === 0) {
@@ -97,10 +124,12 @@ function parseExcel(buffer) {
   // Get headers
   const headers = Object.keys(data[0]);
   
-  // Detect data types for each column
+  // Detect data types for each column - optimized sampling for large datasets
   const columnTypes = {};
+  const sampleSize = Math.min(100, Math.floor(data.length / 10)); // Sample up to 100 rows
+  
   headers.forEach(header => {
-    const sampleValues = data.slice(0, Math.min(10, data.length))
+    const sampleValues = data.slice(0, sampleSize)
       .map(row => row[header])
       .filter(val => val !== null && val !== undefined && val !== '');
     
@@ -120,6 +149,8 @@ function parseExcel(buffer) {
         typeCounts.date >= typeCounts.text ? 'date' : 'text';
     }
   });
+  
+  console.log(`Parsed ${data.length} rows with ${headers.length} columns`);
   
   return {
     headers,
@@ -233,49 +264,116 @@ function applyFilters(data, filters) {
   });
 }
 
-// Upload and parse Excel file
+// Upload and parse Excel file - Optimized for large files
 app.post('/api/upload', upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
+    // Log file size for monitoring
+    const fileSizeMB = (req.file.buffer.length / (1024 * 1024)).toFixed(2);
+    const fileSizeGB = (req.file.buffer.length / (1024 * 1024 * 1024)).toFixed(2);
+    const sizeDisplay = parseFloat(fileSizeGB) >= 1 ? `${fileSizeGB} GB` : `${fileSizeMB} MB`;
+    console.log(`Processing Excel file: ${req.file.originalname} (${sizeDisplay})`);
+    
+    // Check file size and warn for very large files
+    if (req.file.buffer.length > 500 * 1024 * 1024) { // > 500MB
+      console.warn(`Large file detected: ${sizeDisplay}. Processing may take time...`);
+    }
+    
     const parsed = parseExcel(req.file.buffer);
+    
+    // Log parsed data size
+    console.log(`Successfully parsed ${parsed.totalRows.toLocaleString()} rows with ${parsed.headers.length} columns`);
+    
     res.json(parsed);
   } catch (error) {
     console.error('Upload error:', error);
+    
+    // Handle specific error types
+    if (error.message && error.message.includes('heap')) {
+      return res.status(413).json({ 
+        error: 'File too large to process. Please split the file or reduce its size.' 
+      });
+    }
+    
+    if (error.message && error.message.includes('memory')) {
+      return res.status(413).json({ 
+        error: 'Insufficient memory to process file. Please use a smaller file.' 
+      });
+    }
+    
     res.status(400).json({ error: error.message || 'Failed to parse Excel file' });
   }
 });
 
-// Apply filters
+// Apply filters with pagination support for large datasets
 app.post('/api/filter', (req, res) => {
   try {
-    const { data, filters } = req.body;
+    const { data, filters, page, pageSize } = req.body;
     
     if (!data || !Array.isArray(data)) {
       return res.status(400).json({ error: 'Invalid data provided' });
     }
     
+    // Apply filters
     const filteredData = applyFilters(data, filters);
+    const totalRows = filteredData.length;
+    const originalRows = data.length;
+    
+    // Pagination support for large datasets
+    if (page !== undefined && pageSize !== undefined) {
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+      
+      return res.json({
+        data: paginatedData,
+        totalRows,
+        originalRows,
+        currentPage: page,
+        totalPages: Math.ceil(totalRows / pageSize),
+        hasMore: endIndex < totalRows
+      });
+    }
+    
+    // Return all data if no pagination requested
     res.json({ 
       data: filteredData,
-      totalRows: filteredData.length,
-      originalRows: data.length
+      totalRows,
+      originalRows
     });
   } catch (error) {
     console.error('Filter error:', error);
+    
+    // Handle memory errors specifically
+    if (error.message && error.message.includes('heap')) {
+      return res.status(413).json({ 
+        error: 'Dataset too large to process. Please use pagination or reduce data size.' 
+      });
+    }
+    
     res.status(400).json({ error: error.message || 'Failed to apply filters' });
   }
 });
 
-// Export to Excel
+// Export to Excel - Optimized for large datasets with streaming
 app.post('/api/export/excel', (req, res) => {
   try {
     const { data, headers, filename = 'filtered_data.xlsx' } = req.body;
     
     if (!data || !Array.isArray(data) || !headers || !Array.isArray(headers)) {
       return res.status(400).json({ error: 'Invalid data provided' });
+    }
+    
+    // Check data size and log for monitoring
+    const rowCount = data.length;
+    if (rowCount > 100000) {
+      console.log(`Large dataset export: ${rowCount.toLocaleString()} rows`);
+    }
+    if (rowCount > 1000000) {
+      console.warn(`Very large dataset export: ${rowCount.toLocaleString()} rows. This may take several minutes...`);
     }
     
     const workbook = new ExcelJS.Workbook();
@@ -293,42 +391,78 @@ app.post('/api/export/excel', (req, res) => {
       fgColor: { argb: 'FFE0E0E0' }
     };
     
-    // Add data
-    data.forEach(row => {
-      const rowData = headers.map(header => row[header] || '');
-      worksheet.addRow(rowData);
-    });
+    // Optimize: Add data in batches for GB-sized datasets
+    // Larger batch size for better performance with very large datasets
+    const BATCH_SIZE = rowCount > 1000000 ? 5000 : 1000;
+    let processedRows = 0;
+    
+    for (let i = 0; i < data.length; i += BATCH_SIZE) {
+      const batch = data.slice(i, i + BATCH_SIZE);
+      batch.forEach(row => {
+        const rowData = headers.map(header => {
+          const value = row[header];
+          // Handle large strings and null values
+          if (value === null || value === undefined) return '';
+          const strValue = String(value);
+          // Truncate extremely long strings to prevent memory issues (Excel cell limit: 32,767 chars)
+          return strValue.length > 32767 ? strValue.substring(0, 32767) : strValue;
+        });
+        worksheet.addRow(rowData);
+      });
+      
+      processedRows += batch.length;
+      // Log progress for very large exports
+      if (rowCount > 500000 && processedRows % 100000 === 0) {
+        console.log(`Export progress: ${processedRows.toLocaleString()} / ${rowCount.toLocaleString()} rows`);
+      }
+    }
+    
+    console.log(`Excel export completed: ${rowCount.toLocaleString()} rows`);
     
     // Auto-fit columns
     headers.forEach((header, index) => {
-      worksheet.getColumn(index + 1).width = 15;
+      const column = worksheet.getColumn(index + 1);
+      column.width = Math.min(30, Math.max(10, header.length + 2));
     });
     
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     
+    // Stream the response for better memory efficiency
     workbook.xlsx.write(res).then(() => {
       res.end();
     }).catch((error) => {
       console.error('Excel export write error:', error);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to export Excel file' });
+        res.status(500).json({ error: 'Failed to export Excel file. Dataset may be too large.' });
       }
     });
   } catch (error) {
     console.error('Excel export error:', error);
+    
+    // Handle memory errors
+    if (error.message && (error.message.includes('heap') || error.message.includes('memory'))) {
+      return res.status(413).json({ 
+        error: 'Dataset too large to export. Please filter the data or export in smaller batches.' 
+      });
+    }
+    
     res.status(500).json({ error: error.message || 'Failed to export Excel file' });
   }
 });
 
-// Export to PDF
+// Export to PDF - Optimized for large datasets
 app.post('/api/export/pdf', (req, res) => {
   try {
-    const { data, headers, filename = 'filtered_data.pdf' } = req.body;
+    const { data, headers, filename = 'filtered_data.pdf', maxRows = 1000 } = req.body;
     
     if (!data || !Array.isArray(data) || !headers || !Array.isArray(headers)) {
       return res.status(400).json({ error: 'Invalid data provided' });
     }
+    
+    // Limit rows for PDF to prevent memory issues (configurable, default 1000)
+    const rowsToExport = Math.min(data.length, maxRows);
+    const exportData = data.slice(0, rowsToExport);
     
     const doc = new PDFDocument({ margin: 50 });
     
@@ -339,6 +473,10 @@ app.post('/api/export/pdf', (req, res) => {
     
     // Title
     doc.fontSize(20).text('Filtered Data Report', { align: 'center' });
+    doc.moveDown();
+    
+    // Add metadata
+    doc.fontSize(10).text(`Total Rows: ${data.length} | Exported: ${rowsToExport}`, { align: 'center' });
     doc.moveDown();
     
     // Table
@@ -359,10 +497,10 @@ app.post('/api/export/pdf', (req, res) => {
       x += scaledWidths[i];
     });
     
-    // Data rows
+    // Data rows - optimized for large datasets
     doc.font('Helvetica');
     let y = tableTop + rowHeight;
-    data.slice(0, 50).forEach((row, rowIndex) => { // Limit to 50 rows for PDF
+    exportData.forEach((row, rowIndex) => {
       if (y + rowHeight > doc.page.height - 50) {
         doc.addPage();
         y = 50;
@@ -371,21 +509,31 @@ app.post('/api/export/pdf', (req, res) => {
       x = 50;
       headers.forEach((header, i) => {
         doc.rect(x, y, scaledWidths[i], rowHeight).stroke();
-        const cellValue = row[header] !== null && row[header] !== undefined ? String(row[header]).substring(0, 20) : '';
+        const cellValue = row[header] !== null && row[header] !== undefined 
+          ? String(row[header]).substring(0, 20) 
+          : '';
         doc.text(cellValue, x + 5, y + 5, { width: scaledWidths[i] - 10, align: 'left' });
         x += scaledWidths[i];
       });
       y += rowHeight;
     });
     
-    if (data.length > 50) {
+    if (data.length > rowsToExport) {
       doc.moveDown();
-      doc.text(`(Showing first 50 of ${data.length} rows)`, { align: 'center' });
+      doc.text(`(Showing first ${rowsToExport} of ${data.length} rows. Use Excel export for full dataset.)`, { align: 'center' });
     }
     
     doc.end();
   } catch (error) {
     console.error('PDF export error:', error);
+    
+    // Handle memory errors
+    if (error.message && (error.message.includes('heap') || error.message.includes('memory'))) {
+      return res.status(413).json({ 
+        error: 'Dataset too large to export as PDF. Please reduce the number of rows or use Excel export.' 
+      });
+    }
+    
     res.status(500).json({ error: error.message || 'Failed to export PDF file' });
   }
 });

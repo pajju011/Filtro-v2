@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "start:prod": "node --max-old-space-size=8192 server.js",
+    "start:enterprise": "node --max-old-space-size=16384 server.js",
     "dev": "node --watch server.js"
   },
   "keywords": ["excel", "filtering", "api"],
