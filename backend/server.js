@@ -538,6 +538,136 @@ app.post('/api/export/pdf', (req, res) => {
   }
 });
 
+// Match datasets - Extract matching data from large dataset based on small reference dataset
+app.post('/api/match', (req, res) => {
+  try {
+    const { mainData, referenceData, matchConditions, page, pageSize } = req.body;
+    
+    if (!mainData || !Array.isArray(mainData) || !referenceData || !Array.isArray(referenceData)) {
+      return res.status(400).json({ error: 'Both mainData and referenceData must be provided as arrays' });
+    }
+    
+    if (!matchConditions || !Array.isArray(matchConditions) || matchConditions.length === 0) {
+      return res.status(400).json({ error: 'At least one match condition must be provided' });
+    }
+    
+    console.log(`Matching datasets: Main (${mainData.length} rows) vs Reference (${referenceData.length} rows)`);
+    
+    // Create a set of reference values for fast lookup
+    const referenceSets = {};
+    matchConditions.forEach(condition => {
+      const { mainColumn, referenceColumn, matchType = 'exact' } = condition;
+      
+      if (!referenceSets[referenceColumn]) {
+        referenceSets[referenceColumn] = new Set();
+      }
+      
+      // Build reference set based on match type
+      referenceData.forEach(refRow => {
+        const refValue = refRow[referenceColumn];
+        if (refValue !== null && refValue !== undefined && refValue !== '') {
+          if (matchType === 'exact') {
+            referenceSets[referenceColumn].add(String(refValue).toLowerCase().trim());
+          } else if (matchType === 'contains') {
+            // For contains, store all substrings
+            const strValue = String(refValue).toLowerCase();
+            referenceSets[referenceColumn].add(strValue);
+            // Also add individual words for partial matching
+            strValue.split(/\s+/).forEach(word => {
+              if (word.length > 2) referenceSets[referenceColumn].add(word);
+            });
+          } else {
+            referenceSets[referenceColumn].add(String(refValue).toLowerCase().trim());
+          }
+        }
+      });
+    });
+    
+    // Filter main data based on match conditions
+    const matchedData = mainData.filter(mainRow => {
+      // All conditions must match (AND logic)
+      return matchConditions.every(condition => {
+        const { mainColumn, referenceColumn, matchType = 'exact' } = condition;
+        const mainValue = mainRow[mainColumn];
+        
+        if (mainValue === null || mainValue === undefined || mainValue === '') {
+          return false; // Skip empty values
+        }
+        
+        const mainValueStr = String(mainValue).toLowerCase().trim();
+        const referenceSet = referenceSets[referenceColumn];
+        
+        if (!referenceSet) return false;
+        
+        switch (matchType) {
+          case 'exact':
+            return referenceSet.has(mainValueStr);
+          
+          case 'contains':
+            // Check if main value contains any reference value
+            return Array.from(referenceSet).some(refValue => 
+              mainValueStr.includes(refValue) || refValue.includes(mainValueStr)
+            );
+          
+          case 'startsWith':
+            return Array.from(referenceSet).some(refValue => 
+              mainValueStr.startsWith(refValue) || refValue.startsWith(mainValueStr)
+            );
+          
+          case 'endsWith':
+            return Array.from(referenceSet).some(refValue => 
+              mainValueStr.endsWith(refValue) || refValue.endsWith(mainValueStr)
+            );
+          
+          default:
+            return referenceSet.has(mainValueStr);
+        }
+      });
+    });
+    
+    const totalRows = matchedData.length;
+    const originalRows = mainData.length;
+    
+    console.log(`Match completed: ${totalRows} matching rows found from ${originalRows} total rows`);
+    
+    // Pagination support for large matched datasets
+    if (page !== undefined && pageSize !== undefined) {
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = matchedData.slice(startIndex, endIndex);
+      
+      return res.json({
+        data: paginatedData,
+        totalRows,
+        originalRows,
+        referenceRows: referenceData.length,
+        currentPage: page,
+        totalPages: Math.ceil(totalRows / pageSize),
+        hasMore: endIndex < totalRows
+      });
+    }
+    
+    // Return all matched data if no pagination requested
+    res.json({
+      data: matchedData,
+      totalRows,
+      originalRows,
+      referenceRows: referenceData.length
+    });
+  } catch (error) {
+    console.error('Match error:', error);
+    
+    // Handle memory errors
+    if (error.message && error.message.includes('heap')) {
+      return res.status(413).json({ 
+        error: 'Dataset too large to process. Please use pagination or reduce data size.' 
+      });
+    }
+    
+    res.status(400).json({ error: error.message || 'Failed to match datasets' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

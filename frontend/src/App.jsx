@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import FileUpload from './components/FileUpload';
 import FilterBuilder from './components/FilterBuilder';
 import DataTable from './components/DataTable';
+import DatasetMatcher from './components/DatasetMatcher';
 import './App.css';
 
 function App() {
+  const [mode, setMode] = useState('filter'); // 'filter' or 'match'
   const [excelData, setExcelData] = useState(null);
   const [filteredData, setFilteredData] = useState(null);
   const [filters, setFilters] = useState([]);
@@ -52,8 +54,35 @@ function App() {
         <p>Upload Excel files and filter data with powerful conditions</p>
       </header>
 
+      <div className="mode-switcher">
+        <button
+          className={`mode-btn ${mode === 'filter' ? 'active' : ''}`}
+          onClick={() => {
+            setMode('filter');
+            setExcelData(null);
+            setFilteredData(null);
+            setFilters([]);
+          }}
+        >
+          📊 Single File Filter
+        </button>
+        <button
+          className={`mode-btn ${mode === 'match' ? 'active' : ''}`}
+          onClick={() => {
+            setMode('match');
+            setExcelData(null);
+            setFilteredData(null);
+            setFilters([]);
+          }}
+        >
+          🔗 Dataset Matching
+        </button>
+      </div>
+
       <div className="app-content">
-        {!excelData ? (
+        {mode === 'match' ? (
+          <DatasetMatcher />
+        ) : !excelData ? (
           <FileUpload onFileUploaded={handleFileUploaded} />
         ) : (
           <>
