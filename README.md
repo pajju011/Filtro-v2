@@ -1,192 +1,78 @@
 # Filtro - Excel Data Filtering Tool
 
-A professional, user-friendly web application that allows users to upload Excel files (.xls or .xlsx) and filter data using comprehensive filtering conditions. The system automatically detects column headers and data types (text, number, date) from uploaded files and provides an intuitive filtering interface.
+A simple web application to filter and match Excel files with powerful filtering options.
 
 ## Features
 
-### Core Functionality
-- **Excel File Upload**: Supports both .xls and .xlsx formats (up to 10MB)
-- **Automatic Data Type Detection**: Automatically identifies text, number, and date columns
-- **Dynamic Filter Builder**: Add, remove, and modify multiple filter conditions
-- **Comprehensive Filter Types**:
-  - **Numeric**: Equals, Not Equals, Greater Than, Less Than, Greater/Equal, Less/Equal, Between
-  - **Text**: Contains, Does Not Contain, Starts With, Ends With, Exact Match, Is Empty, Is Not Empty
-  - **Date**: Before, After, On, Between
-- **Real-time Filtering**: Apply multiple conditions simultaneously
-- **Data Table Display**: View filtered results in a sortable, paginated table
-- **Export Options**: Download filtered data as Excel (.xlsx) or PDF files
+- **Single File Filter**: Upload one Excel file and filter it with multiple conditions
+- **Reference File Filter**: Upload two files, filter the reference file, and get matched results from both files
+- Supports all Excel formats (.xls, .xlsx)
+- Handles large files (up to 2GB)
+- Export filtered data to Excel or PDF
 
-### User Experience
-- Modern, responsive design with intuitive UI
-- Drag-and-drop file upload
-- Column sorting in the results table
-- Pagination controls
-- Real-time row count display
-- Professional gradient styling
+## Quick Start
 
-## Technology Stack
+### 1. Install Dependencies
 
-### Backend
-- **Node.js** with Express.js
-- **xlsx** - Excel file parsing
-- **ExcelJS** - Excel file generation
-- **PDFKit** - PDF file generation
-- **Multer** - File upload handling
-- **CORS** - Cross-origin resource sharing
+```bash
+# Backend
+cd backend
+npm install
 
-### Frontend
-- **React 18** - UI framework
-- **Vite** - Build tool and dev server
-- **Axios** - HTTP client
-- **CSS3** - Modern styling with gradients and animations
-
-## Installation
-
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-
-### Setup Instructions
-
-1. **Clone the repository** (or navigate to the project directory)
-
-2. **Install Backend Dependencies**
-   ```bash
-   cd backend
-   npm install
-   ```
-
-3. **Install Frontend Dependencies**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-
-## Running the Application
-
-### Development Mode
-
-1. **Start the Backend Server**
-   ```bash
-   cd backend
-   npm start
-   ```
-   The backend server will run on `http://localhost:3001`
-
-2. **Start the Frontend Development Server** (in a new terminal)
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   The frontend application will run on `http://localhost:3000`
-
-3. **Access the Application**
-   Open your browser and navigate to `http://localhost:3000`
-
-### Production Build
-
-1. **Build the Frontend**
-   ```bash
-   cd frontend
-   npm run build
-   ```
-
-2. **Start the Backend** (which can serve the built frontend in production)
-   ```bash
-   cd backend
-   npm start
-   ```
-
-## Usage Guide
-
-### Uploading a File
-1. Click "Browse Files" or drag and drop an Excel file onto the upload area
-2. Supported formats: .xls and .xlsx
-3. Maximum file size: 10MB
-4. The system will automatically parse the file and detect column types
-
-### Adding Filters
-1. Click "Add Filter" to create a new filter condition
-2. Select a column from the dropdown (column type is shown in parentheses)
-3. Choose a filter condition based on the column type
-4. Enter the filter value(s)
-5. Add multiple filters as needed (all filters are combined with AND logic)
-6. Click "Apply Filters" to filter the data
-
-### Viewing Results
-- Filtered results are displayed in a sortable table
-- Click column headers to sort
-- Use pagination controls to navigate through large datasets
-- Adjust rows per page using the dropdown
-
-### Exporting Data
-- Click "Export Excel" to download filtered data as .xlsx file
-- Click "Export PDF" to download filtered data as PDF file (limited to first 50 rows)
-
-### Clearing Filters
-- Click "Clear All" to remove all filters and show original data
-- Click the "✕" button on individual filters to remove them
-- Click "Upload New File" to start over with a different file
-
-## API Endpoints
-
-### POST /api/upload
-Upload and parse an Excel file.
-- **Request**: multipart/form-data with 'file' field
-- **Response**: JSON with headers, data, columnTypes, and totalRows
-
-### POST /api/filter
-Apply filters to data.
-- **Request**: JSON with `data` (array) and `filters` (array)
-- **Response**: JSON with filtered `data`, `totalRows`, and `originalRows`
-
-### POST /api/export/excel
-Export filtered data to Excel.
-- **Request**: JSON with `data`, `headers`, and optional `filename`
-- **Response**: Excel file download
-
-### POST /api/export/pdf
-Export filtered data to PDF.
-- **Request**: JSON with `data`, `headers`, and optional `filename`
-- **Response**: PDF file download
-
-## Project Structure
-
-```
-qac/
-├── backend/
-│   ├── server.js          # Express server and API endpoints
-│   └── package.json       # Backend dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── FileUpload.jsx      # File upload component
-│   │   │   ├── FileUpload.css
-│   │   │   ├── FilterBuilder.jsx   # Dynamic filter builder
-│   │   │   ├── FilterBuilder.css
-│   │   │   ├── DataTable.jsx       # Results table component
-│   │   │   └── DataTable.css
-│   │   ├── App.jsx        # Main application component
-│   │   ├── App.css        # Main application styles
-│   │   ├── main.jsx       # React entry point
-│   │   └── index.css      # Global styles
-│   ├── index.html
-│   ├── vite.config.js     # Vite configuration
-│   └── package.json       # Frontend dependencies
-└── README.md
+# Frontend
+cd ../frontend
+npm install
 ```
 
-## Browser Support
+### 2. Run the Application
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+```bash
+# Terminal 1 - Start Backend
+cd backend
+npm start
 
-## License
+# Terminal 2 - Start Frontend
+cd frontend
+npm run dev
+```
 
-ISC
+### 3. Open Browser
 
-## Contributing
+Go to `http://localhost:3000`
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## How to Use
+
+### Single File Filter
+
+1. Click "Single File Filter" mode
+2. Upload your Excel file
+3. Add filter conditions (text, number, or date)
+4. Click "Apply Filters"
+5. View and export results
+
+### Reference File Filter
+
+1. Click "Reference File Filter" mode
+2. Upload Reference File (file to filter by)
+3. Upload Main File (file to get output from)
+4. Select matching column to link files
+5. Add filter conditions on Reference File
+6. Click "Apply Filters"
+7. View combined results from both files
+
+## File Limits
+
+- Maximum file size: **2GB**
+- Supports millions of rows
+- For very large files, use: `npm run start:prod` (8GB memory)
+
+## Export Options
+
+- Export to Excel (.xlsx)
+- Export to PDF (limited to 1000 rows)
+
+## Technology
+
+- **Backend**: Node.js + Express
+- **Frontend**: React + Vite
+- **File Processing**: xlsx, ExcelJS, PDFKit

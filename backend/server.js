@@ -538,6 +538,294 @@ app.post('/api/export/pdf', (req, res) => {
   }
 });
 
+// Reference File Filter - Professional filtering with join logic
+app.post('/api/reference-filter', (req, res) => {
+  try {
+    const { 
+      referenceData, 
+      primaryData, 
+      keyColumns, 
+      filterConditions, 
+      joinType = 'inner',
+      logicOperator = 'AND',
+      page,
+      pageSize 
+    } = req.body;
+    
+    // Validation
+    if (!referenceData || !Array.isArray(referenceData) || referenceData.length === 0) {
+      return res.status(400).json({ error: 'Reference data must be provided as a non-empty array' });
+    }
+    
+    if (!primaryData || !Array.isArray(primaryData) || primaryData.length === 0) {
+      return res.status(400).json({ error: 'Primary data must be provided as a non-empty array' });
+    }
+    
+    if (!keyColumns || !Array.isArray(keyColumns) || keyColumns.length === 0) {
+      return res.status(400).json({ error: 'At least one key column must be specified' });
+    }
+    
+    // Validate key columns exist in both datasets
+    if (referenceData.length === 0 || primaryData.length === 0) {
+      return res.status(400).json({ error: 'Both datasets must contain at least one row' });
+    }
+    
+    const refHeaders = Object.keys(referenceData[0]);
+    const primaryHeaders = Object.keys(primaryData[0]);
+    
+    for (const keyCol of keyColumns) {
+      if (!refHeaders.includes(keyCol.refColumn)) {
+        return res.status(400).json({ error: `Reference column "${keyCol.refColumn}" not found` });
+      }
+      if (!primaryHeaders.includes(keyCol.primaryColumn)) {
+        return res.status(400).json({ error: `Primary column "${keyCol.primaryColumn}" not found` });
+      }
+    }
+    
+    console.log(`Reference Filter: Ref(${referenceData.length} rows) + Primary(${primaryData.length} rows), Keys: ${keyColumns.length}, Join: ${joinType}`);
+    
+    // Step 1: Apply filters to Reference File
+    let filteredReferenceData = referenceData;
+    
+    if (filterConditions && filterConditions.length > 0) {
+      filteredReferenceData = applyFiltersWithLogic(referenceData, filterConditions, logicOperator);
+      console.log(`After filtering: ${filteredReferenceData.length} reference rows`);
+    }
+    
+    // Step 2: Create lookup map from filtered reference data
+    const referenceMap = new Map();
+    
+    filteredReferenceData.forEach(refRow => {
+      // Create composite key from all key columns
+      const compositeKey = keyColumns.map(kc => {
+        const value = refRow[kc.refColumn];
+        return value !== null && value !== undefined ? String(value).toLowerCase().trim() : '';
+      }).join('|||');
+      
+      if (!referenceMap.has(compositeKey)) {
+        referenceMap.set(compositeKey, []);
+      }
+      referenceMap.get(compositeKey).push(refRow);
+    });
+    
+    // Step 3: Join Primary File with filtered Reference File
+    const joinedData = [];
+    const matchedPrimaryKeys = new Set();
+    
+    primaryData.forEach(primaryRow => {
+      // Create composite key from primary data
+      const compositeKey = keyColumns.map(kc => {
+        const value = primaryRow[kc.primaryColumn];
+        return value !== null && value !== undefined ? String(value).toLowerCase().trim() : '';
+      }).join('|||');
+      
+      const matchingRefRows = referenceMap.get(compositeKey);
+      
+      if (matchingRefRows && matchingRefRows.length > 0) {
+        // Match found - handle one-to-many relationships
+        // Merge reference and primary file data
+        matchingRefRows.forEach(refRow => {
+          const mergedRow = { ...primaryRow };
+          // Add all reference file columns with prefix to avoid conflicts
+          refHeaders.forEach(header => {
+            if (primaryHeaders.includes(header)) {
+              // If column exists in both, keep primary value but add reference with prefix
+              mergedRow[`ref_${header}`] = refRow[header];
+            } else {
+              // If column only in reference, add it with prefix
+              mergedRow[`ref_${header}`] = refRow[header];
+            }
+          });
+          joinedData.push(mergedRow);
+        });
+        matchedPrimaryKeys.add(compositeKey);
+      } else if (joinType === 'left') {
+        // Left join - keep unmatched primary rows with null reference columns
+        const mergedRow = { ...primaryRow };
+        // Add null values for reference columns
+        refHeaders.forEach(header => {
+          if (!primaryHeaders.includes(header)) {
+            mergedRow[`ref_${header}`] = null;
+          } else {
+            mergedRow[`ref_${header}`] = null;
+          }
+        });
+        joinedData.push(mergedRow);
+      }
+    });
+    
+    const totalRows = joinedData.length;
+    const originalPrimaryRows = primaryData.length;
+    const filteredRefRows = filteredReferenceData.length;
+    
+    console.log(`Join completed: ${totalRows} rows (${joinType} join)`);
+    
+    // Return headers from both files (primary + reference with prefix)
+    const allHeaders = [...primaryHeaders];
+    refHeaders.forEach(header => {
+      allHeaders.push(`ref_${header}`);
+    });
+    
+    // Pagination support
+    if (page !== undefined && pageSize !== undefined) {
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = joinedData.slice(startIndex, endIndex);
+      
+      return res.json({
+        data: paginatedData,
+        headers: allHeaders,
+        totalRows,
+        originalPrimaryRows,
+        filteredRefRows,
+        matchedRows: matchedPrimaryKeys.size,
+        currentPage: page,
+        totalPages: Math.ceil(totalRows / pageSize),
+        hasMore: endIndex < totalRows
+      });
+    }
+    
+    // Return all data if no pagination
+    res.json({
+      data: joinedData,
+      headers: allHeaders,
+      totalRows,
+      originalPrimaryRows,
+      filteredRefRows,
+      matchedRows: matchedPrimaryKeys.size
+    });
+  } catch (error) {
+    console.error('Reference filter error:', error);
+    
+    if (error.message && error.message.includes('heap')) {
+      return res.status(413).json({ 
+        error: 'Dataset too large to process. Please use pagination or reduce data size.' 
+      });
+    }
+    
+    res.status(400).json({ error: error.message || 'Failed to apply reference filter' });
+  }
+});
+
+// Helper function to apply filters with AND/OR logic
+function applyFiltersWithLogic(data, filters, logicOperator = 'AND') {
+  if (!filters || filters.length === 0) {
+    return data;
+  }
+  
+  if (logicOperator === 'OR') {
+    // OR logic: row matches if ANY condition is true
+    return data.filter(row => {
+      return filters.some(filter => {
+        return evaluateFilter(row, filter);
+      });
+    });
+  } else {
+    // AND logic: row matches if ALL conditions are true (default)
+    return data.filter(row => {
+      return filters.every(filter => {
+        return evaluateFilter(row, filter);
+      });
+    });
+  }
+}
+
+// Helper function to evaluate a single filter condition
+function evaluateFilter(row, filter) {
+  const { column, condition, value, value2 } = filter;
+  const cellValue = row[column];
+  const cellValueStr = cellValue !== null && cellValue !== undefined ? String(cellValue) : '';
+  
+  switch (condition) {
+    // Numeric conditions
+    case 'equals': {
+      const num1 = parseFloat(cellValue);
+      const num2 = parseFloat(value);
+      return !isNaN(num1) && !isNaN(num2) && num1 === num2;
+    }
+    case 'notEquals': {
+      const num1 = parseFloat(cellValue);
+      const num2 = parseFloat(value);
+      return isNaN(num1) || isNaN(num2) || num1 !== num2;
+    }
+    case 'greaterThan': {
+      const num1 = parseFloat(cellValue);
+      const num2 = parseFloat(value);
+      return !isNaN(num1) && !isNaN(num2) && num1 > num2;
+    }
+    case 'lessThan': {
+      const num1 = parseFloat(cellValue);
+      const num2 = parseFloat(value);
+      return !isNaN(num1) && !isNaN(num2) && num1 < num2;
+    }
+    case 'greaterThanOrEqual': {
+      const num1 = parseFloat(cellValue);
+      const num2 = parseFloat(value);
+      return !isNaN(num1) && !isNaN(num2) && num1 >= num2;
+    }
+    case 'lessThanOrEqual': {
+      const num1 = parseFloat(cellValue);
+      const num2 = parseFloat(value);
+      return !isNaN(num1) && !isNaN(num2) && num1 <= num2;
+    }
+    case 'between': {
+      const num = parseFloat(cellValue);
+      const num1 = parseFloat(value);
+      const num2 = parseFloat(value2);
+      return !isNaN(num) && !isNaN(num1) && !isNaN(num2) && 
+             num >= num1 && num <= num2;
+    }
+    
+    // Text conditions
+    case 'contains':
+      return cellValueStr.toLowerCase().includes(String(value).toLowerCase());
+    case 'doesNotContain':
+      return !cellValueStr.toLowerCase().includes(String(value).toLowerCase());
+    case 'startsWith':
+      return cellValueStr.toLowerCase().startsWith(String(value).toLowerCase());
+    case 'endsWith':
+      return cellValueStr.toLowerCase().endsWith(String(value).toLowerCase());
+    case 'exactMatch':
+      return cellValueStr === String(value);
+    
+    // Date conditions
+    case 'before': {
+      const cellDate = new Date(cellValue);
+      const filterDate = new Date(value);
+      return !isNaN(cellDate.getTime()) && !isNaN(filterDate.getTime()) && 
+             cellDate < filterDate;
+    }
+    case 'after': {
+      const cellDate = new Date(cellValue);
+      const filterDate = new Date(value);
+      return !isNaN(cellDate.getTime()) && !isNaN(filterDate.getTime()) && 
+             cellDate > filterDate;
+    }
+    case 'on': {
+      const cellDate = new Date(cellValue);
+      const filterDate = new Date(value);
+      return !isNaN(cellDate.getTime()) && !isNaN(filterDate.getTime()) && 
+             cellDate.toDateString() === filterDate.toDateString();
+    }
+    case 'betweenDates': {
+      const dateValue = new Date(cellValue);
+      const date1 = new Date(value);
+      const date2 = new Date(value2);
+      return !isNaN(dateValue.getTime()) && !isNaN(date1.getTime()) && !isNaN(date2.getTime()) && 
+             dateValue >= date1 && dateValue <= date2;
+    }
+    
+    // Empty checks
+    case 'isEmpty':
+      return cellValue === null || cellValue === undefined || cellValue === '' || cellValueStr.trim() === '';
+    case 'isNotEmpty':
+      return cellValue !== null && cellValue !== undefined && cellValue !== '' && cellValueStr.trim() !== '';
+    
+    default:
+      return true;
+  }
+}
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

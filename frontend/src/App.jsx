@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import FileUpload from './components/FileUpload';
 import FilterBuilder from './components/FilterBuilder';
 import DataTable from './components/DataTable';
+import ReferenceFileFilter from './components/ReferenceFileFilter';
 import './App.css';
 
 function App() {
+  const [mode, setMode] = useState('single'); // 'single' or 'reference'
   const [excelData, setExcelData] = useState(null);
   const [filteredData, setFilteredData] = useState(null);
   const [filters, setFilters] = useState([]);
@@ -49,11 +51,38 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>Filtro - Excel Data Filtering Tool</h1>
-        <p>Upload Excel files and filter data with powerful conditions</p>
+        <p>Professional Excel data filtering and reference file matching</p>
       </header>
 
+      <div className="mode-switcher">
+        <button
+          className={`mode-btn ${mode === 'single' ? 'active' : ''}`}
+          onClick={() => {
+            setMode('single');
+            setExcelData(null);
+            setFilteredData(null);
+            setFilters([]);
+          }}
+        >
+          📊 Single File Filter
+        </button>
+        <button
+          className={`mode-btn ${mode === 'reference' ? 'active' : ''}`}
+          onClick={() => {
+            setMode('reference');
+            setExcelData(null);
+            setFilteredData(null);
+            setFilters([]);
+          }}
+        >
+          🔗 Reference File Filter
+        </button>
+      </div>
+
       <div className="app-content">
-        {!excelData ? (
+        {mode === 'reference' ? (
+          <ReferenceFileFilter />
+        ) : !excelData ? (
           <FileUpload onFileUploaded={handleFileUploaded} />
         ) : (
           <>
