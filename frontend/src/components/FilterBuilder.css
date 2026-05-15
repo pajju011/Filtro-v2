@@ -1,66 +1,70 @@
-.filter-builder {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 25px;
-  margin-bottom: 30px;
+﻿.filter-builder {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.06);
 }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .filter-header h2 {
-  color: #333;
-  font-size: 1.5em;
+  color: #0f172a;
+  font-size: 1.45rem;
 }
 
 .no-filters {
   text-align: center;
-  padding: 40px;
-  color: #666;
-  background: white;
-  border-radius: 6px;
-  border: 2px dashed #ddd;
+  padding: 40px 26px;
+  color: #475569;
+  background: #f8fafc;
+  border-radius: 18px;
+  border: 1px dashed #cbd5e1;
 }
 
 .filters-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 22px;
 }
 
 .filter-item {
-  background: white;
-  border-radius: 6px;
-  padding: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
 }
 
 .filter-controls {
   display: grid;
-  grid-template-columns: 2fr 2fr 2fr 1fr auto;
-  gap: 10px;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+  gap: 14px;
   align-items: center;
 }
 
 .filter-select,
 .filter-input {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: inherit;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #ffffff;
 }
 
 .filter-select:focus,
 .filter-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
 .filter-input[type="hidden"] {
@@ -68,29 +72,33 @@
 }
 
 .remove-btn {
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: 18px;
-  line-height: 1;
   min-width: auto;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 .filter-actions {
   display: flex;
-  gap: 15px;
+  gap: 16px;
   justify-content: flex-end;
-  padding-top: 15px;
-  border-top: 1px solid #ddd;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   .filter-controls {
     grid-template-columns: 1fr;
   }
-  
+}
+
+@media (max-width: 768px) {
   .filter-actions {
-    flex-direction: column;
+    justify-content: stretch;
   }
-  
+
   .filter-actions .btn {
     width: 100%;
   }

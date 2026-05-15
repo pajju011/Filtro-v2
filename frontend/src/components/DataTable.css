@@ -1,56 +1,63 @@
-.data-table-container {
-  background: white;
-  border-radius: 8px;
-  padding: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+﻿.data-table-container {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e0e0e0;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .table-header h2 {
-  color: #333;
-  font-size: 1.5em;
+  color: #0f172a;
+  font-size: 1.35rem;
 }
 
 .export-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .table-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 6px;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
 }
 
 .rows-select {
   margin-left: 10px;
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  min-width: 90px;
+  background: #ffffff;
 }
 
 .pagination-info {
-  color: #666;
-  font-size: 14px;
+  color: #475569;
+  font-size: 0.95rem;
 }
 
 .table-wrapper {
   overflow-x: auto;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  max-height: 600px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  max-height: 620px;
   overflow-y: auto;
 }
 
@@ -61,111 +68,101 @@
 }
 
 .data-table thead {
-  background: #f8f9fa;
+  background: #f8fafc;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 5;
 }
 
 .data-table th {
-  padding: 12px;
+  padding: 16px 14px;
   text-align: left;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #ddd;
-  border-right: 1px solid #e0e0e0;
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #f1f5f9;
   white-space: nowrap;
 }
 
 .data-table th.sortable {
   cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
 }
 
 .data-table th.sortable:hover {
-  background: #e9ecef;
+  background: #e2e8f0;
 }
 
 .data-table th.sorted-asc,
 .data-table th.sorted-desc {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .sort-icon {
-  margin-left: 5px;
-  font-size: 0.8em;
+  margin-left: 8px;
+  font-size: 0.8rem;
 }
 
 .data-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  border-right: 1px solid #f0f0f0;
-  color: #555;
+  padding: 14px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  color: #334155;
 }
 
 .data-table tbody tr:hover {
-  background: #f8f9fa;
+  background: #f8fafc;
 }
 
 .data-table tbody tr:nth-child(even) {
-  background: #fafafa;
-}
-
-.data-table tbody tr:nth-child(even):hover {
-  background: #f0f0f0;
+  background: #f8fafc;
 }
 
 .no-data {
   text-align: center;
-  padding: 60px;
-  color: #999;
-  font-size: 1.2em;
+  padding: 64px 24px;
+  color: #64748b;
+  font-size: 1rem;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #e2e8f0;
 }
 
 .page-info {
   padding: 0 20px;
-  color: #666;
-  font-weight: 500;
+  color: #475569;
+  font-weight: 600;
 }
 
 .pagination .btn {
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 768px) {
   .table-header {
     flex-direction: column;
-    gap: 15px;
     align-items: stretch;
   }
-  
+
   .export-buttons {
-    flex-direction: column;
-  }
-  
-  .export-buttons .btn {
     width: 100%;
   }
-  
-  .table-controls {
-    flex-direction: column;
-    gap: 10px;
-    align-items: stretch;
-  }
-  
+
   .pagination {
     flex-wrap: wrap;
   }

@@ -5,55 +5,48 @@
 
 .upload-section {
   text-align: center;
-  padding: 40px 20px;
+  padding: 40px 24px;
 }
 
 .upload-section h3 {
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 1.5em;
+  color: #0f172a;
+  margin-bottom: 12px;
+  font-size: 1.6rem;
 }
 
 .section-description {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 20px;
+  color: #475569;
+  font-size: 1rem;
+  margin-bottom: 24px;
+  line-height: 1.75;
 }
 
-.section {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
+.section,
 .key-column-section {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
 }
 
 .key-column-section h3 {
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 1.3em;
-  border-bottom: 2px solid #667eea;
-  padding-bottom: 10px;
+  color: #0f172a;
+  margin-bottom: 12px;
+  font-size: 1.35rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
 }
 
 .key-select {
   width: 100%;
-  max-width: 400px;
-  padding: 12px;
-  font-size: 16px;
-  border: 2px solid #667eea;
-  border-radius: 6px;
-  background: white;
+  max-width: 420px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  background: #ffffff;
   cursor: pointer;
   margin: 0 auto;
   display: block;
@@ -61,23 +54,24 @@
 
 .key-select:focus {
   outline: none;
-  border-color: #764ba2;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
 .key-column-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background: #e8f5e9;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  color: #2e7d32;
-  font-weight: 600;
+  padding: 20px 24px;
+  background: #ecfdf5;
+  border-radius: 18px;
+  margin-bottom: 24px;
+  color: #166534;
+  font-weight: 700;
 }
 
 .key-column-info strong {
-  color: #1b5e20;
+  color: #14532d;
 }
 
 .toolbar {
@@ -86,56 +80,54 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .info-badge {
-  background: #f0f0f0;
+  background: #f8fafc;
   padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  color: #555;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #334155;
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.15);
 }
 
 .btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 14px;
+  font-size: 0.98rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(59, 130, 246, 0.16);
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
-  transform: translateY(-2px);
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .btn-small {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.62;
   cursor: not-allowed;
   transform: none;
 }
@@ -143,13 +135,13 @@
 @media (max-width: 768px) {
   .toolbar {
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
     align-items: stretch;
   }
 
   .key-column-info {
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
     align-items: stretch;
   }
 }

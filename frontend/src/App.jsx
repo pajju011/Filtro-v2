@@ -50,8 +50,28 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Filtro - Excel Data Filtering Tool</h1>
-        <p>Professional Excel data filtering and reference file matching</p>
+        <div className="app-header-top">
+          <div>
+            <h1>Filtro</h1>
+            <p>Professional Excel filtering designed for analysts, operations teams, and decision makers.</p>
+          </div>
+          <span className="header-chip">Modern data workflow • Clean results • Fast decisions</span>
+        </div>
+
+        <div className="app-intro">
+          <div className="intro-card">
+            <strong>Instant filtering</strong>
+            Refine large spreadsheets with advanced rules and export clean results.
+          </div>
+          <div className="intro-card">
+            <strong>Reference matching</strong>
+            Match related files and merge data with confidence.
+          </div>
+          <div className="intro-card">
+            <strong>Export-ready</strong>
+            Create polished Excel and PDF reports in seconds.
+          </div>
+        </div>
       </header>
 
       <div className="mode-switcher">

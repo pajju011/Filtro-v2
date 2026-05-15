@@ -14,6 +14,7 @@
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import multer from 'multer';
 import XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
@@ -22,6 +23,7 @@ const app = express();
 const port = 3001;
 
 // Middleware - Optimized for GB-sized datasets (Real-world production ready)
+app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '2gb' })); // 2GB limit for very large JSON payloads
 app.use(express.urlencoded({ limit: '2gb', extended: true }));
@@ -309,6 +311,14 @@ app.post('/api/filter', (req, res) => {
     
     if (!data || !Array.isArray(data)) {
       return res.status(400).json({ error: 'Invalid data provided' });
+    }
+
+    if (!validateFilterSchema(filters)) {
+      return res.status(400).json({ error: 'Invalid filters provided' });
+    }
+
+    if ((page !== undefined || pageSize !== undefined) && (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1)) {
+      return res.status(400).json({ error: 'Invalid pagination values' });
     }
     
     // Apply filters
@@ -702,6 +712,28 @@ app.post('/api/reference-filter', (req, res) => {
 });
 
 // Helper function to apply filters with AND/OR logic
+function validateFilterSchema(filters) {
+  if (filters === undefined || filters === null) {
+    return true;
+  }
+  if (!Array.isArray(filters)) {
+    return false;
+  }
+  return filters.every(filter => {
+    if (!filter || typeof filter !== 'object') {
+      return false;
+    }
+    if (typeof filter.column !== 'string' || typeof filter.condition !== 'string') {
+      return false;
+    }
+    const noValueConditions = new Set(['isEmpty', 'isNotEmpty']);
+    if (!noValueConditions.has(filter.condition) && (filter.value === undefined || filter.value === null || String(filter.value).trim() === '')) {
+      return false;
+    }
+    return true;
+  });
+}
+
 function applyFiltersWithLogic(data, filters, logicOperator = 'AND') {
   if (!filters || filters.length === 0) {
     return data;
@@ -820,6 +852,10 @@ function evaluateFilter(row, filter) {
   }
 }
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
+}
+
+export { app, detectDataType, parseExcel, applyFilters, applyFiltersWithLogic, evaluateFilter, validateFilterSchema };
