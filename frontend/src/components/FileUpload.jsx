@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 import './FileUpload.css';
 
@@ -80,7 +81,7 @@ function FileUpload({ onFileUploaded }) {
           disabled={uploading}
           style={{ display: 'none' }}
         />
-        
+
         {uploading ? (
           <div className="upload-status">
             <div className="spinner"></div>
@@ -107,5 +108,9 @@ function FileUpload({ onFileUploaded }) {
     </div>
   );
 }
+
+FileUpload.propTypes = {
+  onFileUploaded: PropTypes.func.isRequired,
+};
 
 export default FileUpload;

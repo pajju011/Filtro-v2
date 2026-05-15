@@ -53,7 +53,10 @@ function App() {
         <div className="app-header-top">
           <div>
             <h1>Filtro</h1>
-            <p>Professional Excel filtering designed for analysts, operations teams, and decision makers.</p>
+            <p>
+              Professional Excel filtering designed for analysts, operations teams, and decision
+              makers.
+            </p>
           </div>
           <span className="header-chip">Modern data workflow • Clean results • Fast decisions</span>
         </div>
@@ -118,8 +121,7 @@ function App() {
                 Upload New File
               </button>
               <div className="info-badge">
-                Original: {excelData.totalRows} rows | 
-                Filtered: {filteredData?.length || 0} rows
+                Original: {excelData.totalRows} rows | Filtered: {filteredData?.length || 0} rows
               </div>
             </div>
 
@@ -133,13 +135,7 @@ function App() {
               loading={loading}
             />
 
-            {filteredData && (
-              <DataTable
-                headers={excelData.headers}
-                data={filteredData}
-                originalData={excelData.data}
-              />
-            )}
+            {filteredData && <DataTable headers={excelData.headers} data={filteredData} />}
           </>
         )}
       </div>

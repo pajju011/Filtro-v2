@@ -67,7 +67,7 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
-.filter-input[type="hidden"] {
+.filter-input[type='hidden'] {
   display: none;
 }
 

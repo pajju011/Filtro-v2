@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import './FilterBuilder.css';
 
 const FILTER_CONDITIONS = {
@@ -120,13 +121,12 @@ function FilterBuilder({
 
       {localFilters.length === 0 ? (
         <div className="no-filters">
-          <p>No filters applied. Click "Add Filter" to start filtering your data.</p>
+          <p>No filters applied. Click &quot;Add Filter&quot; to start filtering your data.</p>
         </div>
       ) : (
         <>
           <div className="filters-list">
             {localFilters.map((filter) => {
-              const conditions = getConditionsForColumn(filter.column);
               const needsValue2 = needsSecondValue(filter.condition);
               const needsValueInput = needsValue(filter.condition);
 
@@ -148,9 +148,7 @@ function FilterBuilder({
                     <select
                       className="filter-select"
                       value={filter.condition}
-                      onChange={(e) =>
-                        updateFilter(filter.id, 'condition', e.target.value)
-                      }
+                      onChange={(e) => updateFilter(filter.id, 'condition', e.target.value)}
                     >
                       {getConditionsForColumn(filter.column).map((cond) => (
                         <option key={cond.value} value={cond.value}>
@@ -165,9 +163,7 @@ function FilterBuilder({
                         className="filter-input"
                         placeholder="Value"
                         value={filter.value}
-                        onChange={(e) =>
-                          updateFilter(filter.id, 'value', e.target.value)
-                        }
+                        onChange={(e) => updateFilter(filter.id, 'value', e.target.value)}
                       />
                     )}
 
@@ -177,9 +173,7 @@ function FilterBuilder({
                         className="filter-input"
                         placeholder="To"
                         value={filter.value2}
-                        onChange={(e) =>
-                          updateFilter(filter.id, 'value2', e.target.value)
-                        }
+                        onChange={(e) => updateFilter(filter.id, 'value2', e.target.value)}
                       />
                     )}
 
@@ -197,11 +191,7 @@ function FilterBuilder({
           </div>
 
           <div className="filter-actions">
-            <button
-              className="btn btn-success"
-              onClick={handleApply}
-              disabled={loading}
-            >
+            <button className="btn btn-success" onClick={handleApply} disabled={loading}>
               {loading ? 'Applying Filters...' : 'Apply Filters'}
             </button>
             <button
@@ -221,5 +211,21 @@ function FilterBuilder({
     </div>
   );
 }
+
+FilterBuilder.propTypes = {
+  headers: PropTypes.arrayOf(PropTypes.string),
+  columnTypes: PropTypes.object,
+  filters: PropTypes.arrayOf(PropTypes.object),
+  onFiltersChange: PropTypes.func.isRequired,
+  onApplyFilters: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
+
+FilterBuilder.defaultProps = {
+  headers: [],
+  columnTypes: {},
+  filters: [],
+  loading: false,
+};
 
 export default FilterBuilder;

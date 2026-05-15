@@ -5,10 +5,16 @@
 }
 
 body {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 28%),
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 28%),
     radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.18), transparent 25%),
     linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
   min-height: 100vh;

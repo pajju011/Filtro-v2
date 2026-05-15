@@ -16,12 +16,8 @@ describe('Backend API', () => {
     const response = await request(app)
       .post('/api/filter')
       .send({
-        data: [
-          { value: '10' },
-          { value: '20' },
-          { value: '30' }
-        ],
-        filters: [{ column: 'value', condition: 'greaterThan', value: '15' }]
+        data: [{ value: '10' }, { value: '20' }, { value: '30' }],
+        filters: [{ column: 'value', condition: 'greaterThan', value: '15' }],
       });
 
     expect(response.status).toBe(200);

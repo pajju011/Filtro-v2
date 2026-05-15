@@ -29,10 +29,10 @@ function ReferenceFileFilter() {
   };
 
   const autoDetectKeyColumn = (refData, mainData) => {
-    const commonHeaders = refData.headers.filter(h => mainData.headers.includes(h));
+    const commonHeaders = refData.headers.filter((h) => mainData.headers.includes(h));
     const keyColumnNames = ['id', 'code', 'key', 'name', 'number', 'no', 'ref', 'reference'];
-    const detectedKey = commonHeaders.find(h => 
-      keyColumnNames.some(key => h.toLowerCase().includes(key))
+    const detectedKey = commonHeaders.find((h) =>
+      keyColumnNames.some((key) => h.toLowerCase().includes(key)),
     );
     if (detectedKey) {
       setKeyColumn({ refColumn: detectedKey, primaryColumn: detectedKey });
@@ -60,9 +60,15 @@ function ReferenceFileFilter() {
         referenceData: referenceData.data,
         primaryData: mainData.data,
         keyColumns: [keyColumn],
-        filterConditions: filters.length > 0
-          ? filters.map(({ id, ...rest }) => rest)
-          : null,
+        filterConditions:
+          filters.length > 0
+            ? filters.map((filter) => ({
+                column: filter.column,
+                condition: filter.condition,
+                value: filter.value,
+                value2: filter.value2,
+              }))
+            : null,
         joinType: 'inner',
         logicOperator: 'AND',
       });
@@ -105,9 +111,7 @@ function ReferenceFileFilter() {
             <button className="btn btn-secondary" onClick={() => setReferenceData(null)}>
               ← Back
             </button>
-            <div className="info-badge">
-              Reference File: {referenceData.totalRows} rows loaded
-            </div>
+            <div className="info-badge">Reference File: {referenceData.totalRows} rows loaded</div>
           </div>
           <h3>Step 2: Upload Main File</h3>
           <p className="section-description">
@@ -122,9 +126,10 @@ function ReferenceFileFilter() {
               Upload New Files
             </button>
             <div className="info-badge">
-              Reference: {referenceData.totalRows} rows | 
-              Main: {mainData.totalRows} rows | 
-              Filtered: {filteredData?.totalRows || filteredData?.data?.length || filteredData?.length || 0} rows
+              Reference: {referenceData.totalRows} rows | Main: {mainData.totalRows} rows |
+              Filtered:{' '}
+              {filteredData?.totalRows || filteredData?.data?.length || filteredData?.length || 0}{' '}
+              rows
             </div>
           </div>
 
@@ -138,15 +143,19 @@ function ReferenceFileFilter() {
                 className="key-select"
                 onChange={(e) => {
                   const selectedCol = e.target.value;
-                  if (selectedCol && referenceData.headers.includes(selectedCol) && mainData.headers.includes(selectedCol)) {
+                  if (
+                    selectedCol &&
+                    referenceData.headers.includes(selectedCol) &&
+                    mainData.headers.includes(selectedCol)
+                  ) {
                     setKeyColumn({ refColumn: selectedCol, primaryColumn: selectedCol });
                   }
                 }}
-                value={keyColumn ? keyColumn.refColumn : ""}
+                value={keyColumn ? keyColumn.refColumn : ''}
               >
                 <option value="">Select matching column...</option>
                 {referenceData.headers
-                  .filter(h => mainData.headers.includes(h))
+                  .filter((h) => mainData.headers.includes(h))
                   .map((header) => (
                     <option key={header} value={header}>
                       {header}
@@ -159,11 +168,10 @@ function ReferenceFileFilter() {
           {keyColumn && (
             <>
               <div className="key-column-info">
-                <span>Linked by: <strong>{keyColumn.refColumn}</strong></span>
-                <button
-                  className="btn btn-secondary btn-small"
-                  onClick={() => setKeyColumn(null)}
-                >
+                <span>
+                  Linked by: <strong>{keyColumn.refColumn}</strong>
+                </span>
+                <button className="btn btn-secondary btn-small" onClick={() => setKeyColumn(null)}>
                   Change
                 </button>
               </div>
@@ -181,8 +189,7 @@ function ReferenceFileFilter() {
               {filteredData && (
                 <DataTable
                   headers={filteredData.headers || mainData.headers}
-                  data={Array.isArray(filteredData) ? filteredData : (filteredData.data || [])}
-                  originalData={mainData.data}
+                  data={Array.isArray(filteredData) ? filteredData : filteredData.data || []}
                 />
               )}
             </>

@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 import './DataTable.css';
 
-function DataTable({ headers, data, originalData }) {
+function DataTable({ headers, data }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,7 +71,7 @@ function DataTable({ headers, data, originalData }) {
         },
         {
           responseType: 'blob',
-        }
+        },
       );
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -101,7 +102,7 @@ function DataTable({ headers, data, originalData }) {
         },
         {
           responseType: 'blob',
-        }
+        },
       );
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -168,8 +169,7 @@ function DataTable({ headers, data, originalData }) {
             </label>
             <div className="pagination-info">
               Showing {(currentPage - 1) * rowsPerPage + 1} to{' '}
-              {Math.min(currentPage * rowsPerPage, sortedData.length)} of{' '}
-              {sortedData.length} rows
+              {Math.min(currentPage * rowsPerPage, sortedData.length)} of {sortedData.length} rows
             </div>
           </div>
 
@@ -181,13 +181,13 @@ function DataTable({ headers, data, originalData }) {
                     <th
                       key={header}
                       onClick={() => handleSort(header)}
-                      className={sortColumn === header ? `sortable sorted-${sortDirection}` : 'sortable'}
+                      className={
+                        sortColumn === header ? `sortable sorted-${sortDirection}` : 'sortable'
+                      }
                     >
                       {header}
                       {sortColumn === header && (
-                        <span className="sort-icon">
-                          {sortDirection === 'asc' ? ' ▲' : ' ▼'}
-                        </span>
+                        <span className="sort-icon">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
                       )}
                     </th>
                   ))}
@@ -249,5 +249,10 @@ function DataTable({ headers, data, originalData }) {
     </div>
   );
 }
+
+DataTable.propTypes = {
+  headers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  data: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
 
 export default DataTable;
