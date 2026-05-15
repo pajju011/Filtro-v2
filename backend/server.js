@@ -13,17 +13,11 @@
  */
 
 import express from 'express';
-import cors from 'cors';   
-import multer from 'multer';                           
-import XLSX from 'xlsx';                                                 
-import ExcelJS from 'exceljs';                   
-import PDFDocument from 'pdfkit';                      
-import { fileURLToPath } from 'url'; 
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);           
-
+import cors from 'cors';
+import multer from 'multer';
+import XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import PDFDocument from 'pdfkit';
 const app = express();
 const port = 3001;
 

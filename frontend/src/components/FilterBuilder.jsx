@@ -37,16 +37,20 @@ function FilterBuilder({
   loading,
 }) {
   const [localFilters, setLocalFilters] = useState(filters);
+  const headerOptions = headers || [];
+  const columnTypeMap = columnTypes || {};
 
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
 
   const addFilter = () => {
+    const defaultColumn = headerOptions[0] || '';
+    const defaultCondition = getConditionsForColumn(defaultColumn)[0]?.value || 'equals';
     const newFilter = {
       id: Date.now(),
-      column: headers[0] || '',
-      condition: FILTER_CONDITIONS[columnTypes[headers[0]]]?.[0]?.value || 'equals',
+      column: defaultColumn,
+      condition: defaultCondition,
       value: '',
       value2: '',
     };
@@ -85,7 +89,7 @@ function FilterBuilder({
   };
 
   const getConditionsForColumn = (column) => {
-    const type = columnTypes[column] || 'text';
+    const type = columnTypeMap[column] || 'text';
     return FILTER_CONDITIONS[type] || FILTER_CONDITIONS.text;
   };
 
@@ -134,9 +138,9 @@ function FilterBuilder({
                       value={filter.column}
                       onChange={(e) => updateFilter(filter.id, 'column', e.target.value)}
                     >
-                      {headers.map((header) => (
+                      {headerOptions.map((header) => (
                         <option key={header} value={header}>
-                          {header} ({columnTypes[header]})
+                          {header} ({columnTypeMap[header] || 'text'})
                         </option>
                       ))}
                     </select>
