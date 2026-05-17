@@ -6,7 +6,7 @@ A simple web application to filter and match Excel files with powerful filtering
 
 - **Single File Filter**: Upload one Excel file and filter it with multiple conditions
 - **Reference File Filter**: Upload two files, filter the reference file, and get matched results from both files
-- Supports all Excel formats (.xls, .xlsx)
+- Supports Excel .xlsx files
 - Handles large files (up to 2GB)
 - Export filtered data to Excel or PDF
 

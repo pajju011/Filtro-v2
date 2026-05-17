@@ -16,7 +16,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import multer from 'multer';
-import XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 const app = express();
@@ -35,17 +34,15 @@ const upload = multer({
   limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB limit for very large Excel files
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
-      'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
     if (
       allowedMimes.includes(file.mimetype) ||
-      file.originalname.endsWith('.xls') ||
       file.originalname.endsWith('.xlsx')
     ) {
       cb(null, true);
     } else {
-      cb(new Error('Only Excel files (.xls, .xlsx) are allowed'), false);
+      cb(new Error('Only Excel files (.xlsx) are allowed'), false);
     }
   },
 });
@@ -91,36 +88,41 @@ function detectDataType(value) {
 }
 
 // Helper function to parse Excel file - Optimized for GB-sized files
-function parseExcel(buffer) {
+async function parseExcel(buffer) {
   const fileSizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
   console.log(`Parsing Excel file: ${fileSizeMB} MB`);
 
-  // For very large files, use optimized parsing options
-  const parseOptions = {
-    type: 'buffer',
-    cellDates: true,
-    dense: false, // Use sparse mode for memory efficiency
-    sheetStubs: false, // Skip empty cells
-  };
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  const worksheet = workbook.worksheets[0];
 
-  const workbook = XLSX.read(buffer, parseOptions);
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
+  if (!worksheet) {
+    throw new Error('Excel file is empty');
+  }
 
-  // Convert to JSON with header row - optimized for large datasets
-  const data = XLSX.utils.sheet_to_json(worksheet, {
-    raw: false,
-    defval: null,
-    dateNF: 'yyyy-mm-dd',
-    blankrows: false, // Skip blank rows to save memory
+  const headerRow = worksheet.getRow(1);
+  const headers = headerRow.values.slice(1).map((header) => {
+    if (header === null || header === undefined) return '';
+    return String(header);
+  });
+
+  const data = [];
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) return;
+
+    const rowObj = {};
+    headers.forEach((header, idx) => {
+      const cell = row.getCell(idx + 1);
+      const value = cell.value;
+
+      rowObj[header || `Column${idx + 1}`] = convertCellValue(value);
+    });
+    data.push(rowObj);
   });
 
   if (data.length === 0) {
     throw new Error('Excel file is empty');
   }
-
-  // Get headers
-  const headers = Object.keys(data[0]);
 
   // Detect data types for each column - optimized sampling for large datasets
   const columnTypes = {};
@@ -135,14 +137,12 @@ function parseExcel(buffer) {
     if (sampleValues.length === 0) {
       columnTypes[header] = 'text';
     } else {
-      // Count occurrences of each type
       const typeCounts = { text: 0, number: 0, date: 0 };
       sampleValues.forEach((val) => {
         const type = detectDataType(val);
         typeCounts[type]++;
       });
 
-      // Use the most common type
       columnTypes[header] =
         typeCounts.number >= typeCounts.date && typeCounts.number >= typeCounts.text
           ? 'number'
@@ -160,6 +160,34 @@ function parseExcel(buffer) {
     columnTypes,
     totalRows: data.length,
   };
+}
+
+function convertCellValue(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'object') {
+    if (value.text !== undefined) {
+      return value.text;
+    }
+    if (value.richText) {
+      return value.richText.map((item) => item.text).join('');
+    }
+    if (value.hyperlink) {
+      return value.text || value.hyperlink;
+    }
+    if (value.formula !== undefined) {
+      return value.result;
+    }
+    return String(value);
+  }
+
+  return value;
 }
 
 // Apply filters to data
@@ -286,7 +314,7 @@ function applyFilters(data, filters) {
 }
 
 // Upload and parse Excel file - Optimized for large files
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });

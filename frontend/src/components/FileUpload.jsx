@@ -11,8 +11,8 @@ function FileUpload({ onFileUploaded }) {
   const handleFile = async (file) => {
     if (!file) return;
 
-    if (!file.name.endsWith('.xls') && !file.name.endsWith('.xlsx')) {
-      setError('Please upload a valid Excel file (.xls or .xlsx)');
+    if (!file.name.endsWith('.xlsx')) {
+      setError('Please upload a valid Excel file (.xlsx)');
       return;
     }
 
@@ -76,10 +76,7 @@ function FileUpload({ onFileUploaded }) {
         <input
           type="file"
           id="file-upload"
-          accept=".xls,.xlsx"
-          onChange={handleChange}
-          disabled={uploading}
-          style={{ display: 'none' }}
+            accept=".xlsx"
         />
 
         {uploading ? (
@@ -95,7 +92,7 @@ function FileUpload({ onFileUploaded }) {
             <label htmlFor="file-upload" className="btn btn-primary">
               Browse Files
             </label>
-            <p className="file-info">Supports .xls and .xlsx files (max 10MB)</p>
+            <p className="file-info">Supports .xlsx files only (max 10MB)</p>
           </>
         )}
       </div>
